@@ -1,5 +1,4 @@
 
-# build_database.py
 import pandas as pd
 from langchain_chroma import Chroma
 from langchain.docstore.document import Document
@@ -12,14 +11,13 @@ texts = df['passage'].tolist()
 
 print(f"Loaded {len(texts)} passages. Using lighter model...")
 
-# USE A MUCH LIGHTER MODEL - 5x faster!
+
 embeddings = HuggingFaceEmbeddings(model_name="paraphrase-MiniLM-L3-v2")
 
 
 print("Processing in small batches (to prevent overheating)...")
 docs = [Document(page_content=text) for text in texts]
 
-# Process in small batches with delays to let laptop cool down
 batch_size = 500  # Smaller batches
 
 for i in range(0, len(docs), batch_size):
@@ -27,20 +25,21 @@ for i in range(0, len(docs), batch_size):
     print(f"Processing batch {i//batch_size + 1}/{(len(docs)//batch_size)+1}...")
     
     if i == 0:
-        # First batch creates the database
+        
         vector_db = Chroma.from_documents(
             documents=batch,
             embedding=embeddings,
             persist_directory="./bio_db"
         )
     else:
-        # Subsequent batches get added
+        
         vector_db.add_documents(batch)
     
-    # Let the laptop cool down between batches
-    time.sleep(10)  # 10 second cooldown
+    
+    time.sleep(10) 
     print("Batch completed. Cooling down...")
 
 vector_db.persist()
 print("✅ Database built and saved to './bio_db' folder!")
+
 print(f"✅ Added {len(docs)} biology passages to the database!")
