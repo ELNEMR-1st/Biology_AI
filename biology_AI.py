@@ -8,13 +8,11 @@ import os
 
 app = Flask(__name__)
 
-# Load your AI components
 embeddings = HuggingFaceEmbeddings(model_name="paraphrase-MiniLM-L3-v2")
 vector_db = Chroma(persist_directory="./bio_db", embedding_function=embeddings)
 os.environ["GOOGLE_API_KEY"] = "AIzaSyC1K699ZyyHNVNddfSf70QURUoCWWDFYNw"
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 
-# ======== UNIQUE CUSTOM PROMPT ========
 CUSTOM_PROMPT_TEMPLATE = """You are BiologyGPT, an expert biology assistant. Use the following context to answer the question in a CLEAR, STRUCTURED way.
 
 CONTEXT:
@@ -39,15 +37,13 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question"]
 )
 
-# Create the RAG chain with custom prompt
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=vector_db.as_retriever(search_kwargs={"k": 3}),
     return_source_documents=True,
-    chain_type_kwargs={"prompt": PROMPT}  # ← UNIQUE PROMPT ADDED!
+    chain_type_kwargs={"prompt": PROMPT}  
 )
 
-# [Keep the rest of your Flask code the same...]
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html>
@@ -86,10 +82,11 @@ def ask():
     question = request.form['question']
     try:
         result = qa_chain.invoke({"query": question})
-        answer = result['result'].replace('\n', '<br>')  # Convert newlines to HTML
+        answer = result['result'].replace('\n', '<br>') 
         return render_template_string(HTML_TEMPLATE, answer=answer)
     except Exception as e:
         return render_template_string(HTML_TEMPLATE, answer=f"Error: {str(e)}")
 
 if __name__ == '__main__':
+
     app.run(port=5000, debug=True)
